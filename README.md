@@ -92,3 +92,40 @@ gradlew test
 # Compilar el APK debug
 gradlew assembleDebug
 ```
+
+---
+
+## 🧤 Firmware ESP32 del Guante (Hardware)
+
+El código fuente del microcontrolador ESP32 se encuentra en la carpeta [`firmware/guante_esp32/guante_esp32.ino`]
+
+> ⚠️ **Nota Crucial**: Sin este código cargado en el ESP32, el guante físico no puede sensar los movimientos de la mano ni enviar las señales de telemetría a la aplicación móvil. La app móvil requiere la transmisión continua de tramas BLE provenientes de este firmware para reconocer los gestos en tiempo real (salvo que se use el *Modo Simulación* integrado).
+
+### Arquitectura de Conexión del ESP32
+
+- **Sensores de Flexión de los Dedos**:
+  - **Pulgar**: PCF8591 Canal 2 (`AIN2`)
+  - **Índice**: PCF8591 Canal 1 (`AIN1`)
+  - **Medio**: PCF8591 Canal 0 (`AIN0`)
+  - **Anular**: PCF8591 Canal 3 (`AIN3`)
+  - **Meñique**: `GPIO 34` (ADC analógico directo del ESP32)
+- **Orientación e Inclinación Espacial**:
+  - Sensor **MPU-6050** (I2C en `0x68`, SDA en `GPIO 21`, SCL en `GPIO 22`), calculando en tiempo real los ángulos de inclinación **Pitch** y **Roll**.
+- **Enlace Inalámbrico BLE**:
+  - Nombre del dispositivo BLE: `Guante_ESP32`
+  - Service UUID: `4fafc201-1fb5-459e-8fcc-c5c9c331914b`
+  - Characteristic UUID: `beb5483e-36e1-4688-b7f5-ea07361b26a8`
+  - Frecuencia de muestreo y envío: cada **100 ms** (10 Hz).
+  - Trama JSON emitida:
+    ```json
+    {"pulgar":15,"indice":80,"medio":85,"anular":82,"menique":20,"pitch":12.4,"roll":-3.1}
+    ```
+
+### Pasos para Flashear el ESP32 (Arduino IDE)
+
+1. Abre el sketch [`firmware/guante_esp32/guante_esp32.ino`] en **Arduino IDE**.
+2. Asegúrate de tener instalado el soporte de placas **esp32** y la librería **`MPU6050_light`** (de *rfetick*).
+3. Selecciona la placa (ej. *ESP32 Dev Module*) y el puerto COM correspondiente.
+4. Presiona **Subir (Upload)**.
+5. Al encender, mantén el guante inmóvil durante 2 segundos mientras realiza la calibración del MPU-6050.
+
